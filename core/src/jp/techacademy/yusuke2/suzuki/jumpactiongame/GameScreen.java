@@ -5,10 +5,12 @@ package jp.techacademy.yusuke2.suzuki.jumpactiongame;
  */
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
@@ -52,6 +54,10 @@ public class GameScreen extends ScreenAdapter {
     float mHeightSoFar; // ←追加する
     int mGameState;
     Vector3 mTouchPoint; // ←追加する
+    BitmapFont mFont; // ←追加する
+    int mScore; // ←追加する
+    int mHighScore; // ←追加する
+    Preferences mPrefs; // ←追加する
 
     public GameScreen(JumpActionGame game) {
         mGame = game;
@@ -79,6 +85,14 @@ public class GameScreen extends ScreenAdapter {
         mStars = new ArrayList<Star>();
         mGameState = GAME_STATE_READY;
         mTouchPoint = new Vector3(); // ←追加する
+        mFont = new BitmapFont(Gdx.files.internal("font.fnt"), Gdx.files.internal("font.png"), false); // ←追加する
+        mFont.getData().setScale(0.8f);// ←追加する
+        mScore = 0;// ←追加する
+        mHighScore = 0;// ←追加する
+
+        // ハイスコアをPreferencesから取得する
+        mPrefs = Gdx.app.getPreferences("jp.techacademy.taro.kirameki.jumpactiongame"); // ←追加する
+        mHighScore = mPrefs.getInteger("HIGHSCORE", 0); // ←追加する
 
         createStage();
     }
@@ -125,11 +139,20 @@ public class GameScreen extends ScreenAdapter {
         mPlayer.draw(mGame.batch);
 
         mGame.batch.end();
+
+        // スコア表示
+        mGuiCamera.update(); // ←追加する
+        mGame.batch.setProjectionMatrix(mGuiCamera.combined); // ←追加する
+        mGame.batch.begin(); // ←追加する
+        mFont.draw(mGame.batch, "HighScore: " + mHighScore, 16, GUI_HEIGHT - 15); // ←追加する
+        mFont.draw(mGame.batch, "Score: " + mScore, 16, GUI_HEIGHT - 35); // ←追加する
+        mGame.batch.end(); // ←追加する
+
     }
 
     @Override
     public void resize(int width, int height) {
-        mViewPort.update(width, height)
+        mViewPort.update(width, height);
         mGuiViewPort.update(width, height);
     }
 
@@ -219,6 +242,15 @@ public class GameScreen extends ScreenAdapter {
 
         // 当たり判定を行う
         checkCollision(); // ←追加する
+
+        // ゲームオーバーか判断する
+        checkGameOver();
+    }
+
+    private void updateGameOver() {
+        if (Gdx.input.justTouched()) {
+            mGame.setScreen(new ResultScreen(mGame, mScore));
+        }
     }
 
     private void checkCollision() {
@@ -238,6 +270,13 @@ public class GameScreen extends ScreenAdapter {
 
             if (mPlayer.getBoundingRectangle().overlaps(star.getBoundingRectangle())) {
                 star.get();
+                mScore++;
+                if (mScore > mHighScore) {
+                    mHighScore = mScore;
+                    //ハイスコアをPreferenceに保存する
+                    mPrefs.putInteger("HIGHSCORE", mHighScore); // ←追加する
+                    mPrefs.flush(); // ←追加する
+                }
                 break;
             }
         }
@@ -267,7 +306,10 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
-    private void updateGameOver() {
-
+    private void checkGameOver() {
+        if (mHeightSoFar - CAMERA_HEIGHT / 2 > mPlayer.getY()) {
+            Gdx.app.log("JampActionGame", "GAMEOVER");
+            mGameState = GAME_STATE_GAMEOVER;
+        }
     }
 }
