@@ -16,7 +16,7 @@ android {
     }
     defaultConfig {
         applicationId "jp.techacademy.yusuke2.suzuki.jumpactiongame"
-        minSdkVersion 8
+        minSdkVersion 9 // ←8から9に変更する
         targetSdkVersion 24
     }
 }
@@ -123,4 +123,9 @@ idea {
             }
         }
     }
+}
+
+// 下記、追加する
+dependencies {
+    compile 'com.google.android.gms:play-services:6.+'
 }

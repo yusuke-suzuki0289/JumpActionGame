@@ -103,6 +103,7 @@ public class GameScreen extends ScreenAdapter {
         // それぞれの状態をアップデートする
         update(delta);
 
+        // 描画する
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
